@@ -75,8 +75,8 @@ void main() {
       expect(json['level'], equals('info'));
       expect(json['message'], equals('hello'));
       expect(json['timestamp'], contains('2025-06-15'));
-      expect(json.containsKey('service_name'), isFalse);
-      expect(json.containsKey('tags'), isFalse);
+      expect(json.containsKey('service'), isFalse);
+      expect(json.containsKey('meta'), isFalse);
     });
 
     test('toJson includes all optional fields', () {
@@ -92,8 +92,8 @@ void main() {
 
       final json = entry.toJson();
 
-      expect(json['service_name'], equals('api'));
-      expect(json['tags']['code'], equals(500));
+      expect(json['service'], equals('api'));
+      expect(json['meta']['code'], equals(500));
       expect(json['trace_id'], equals('tr1'));
       expect(json['span_id'], equals('sp1'));
     });
