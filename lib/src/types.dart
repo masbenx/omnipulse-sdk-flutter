@@ -63,8 +63,8 @@ class LogEntry {
     'timestamp': timestamp.toIso8601String(),
     'level': level.name,
     'message': message,
-    if (serviceName != null) 'service_name': serviceName,
-    if (tags != null) 'tags': tags,
+    if (serviceName != null) 'service': serviceName,
+    if (tags != null) 'meta': tags,
     if (traceId != null) 'trace_id': traceId,
     if (spanId != null) 'span_id': spanId,
   };

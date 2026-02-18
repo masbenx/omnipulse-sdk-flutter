@@ -145,7 +145,7 @@ class OmniPulse {
   Future<void> _sendLogs(List<LogEntry> logs) async {
     try {
       final payload = {
-        'logs': logs.map((l) => l.toJson()).toList(),
+        'entries': logs.map((l) => l.toJson()).toList(),
       };
       await _send('/api/ingest/app-logs', payload);
     } catch (e) {
