@@ -1,6 +1,6 @@
 name: omnipulse_flutter
 description: OmniPulse SDK for Flutter applications. Provides logging, error tracking, and performance monitoring.
-version: 1.0.0
+version: 1.0.1
 homepage: https://github.com/masbenx/omnipulse-flutter
 
 environment:

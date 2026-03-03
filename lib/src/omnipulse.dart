@@ -157,10 +157,9 @@ class OmniPulse {
 
   Future<void> _sendErrors(List<ErrorEvent> errors) async {
     try {
-      final payload = {
-        'errors': errors.map((e) => e.toJson()).toList(),
-      };
-      await _send('/api/ingest/app-errors', payload);
+      for (final error in errors) {
+        await _send('/api/ingest/app-errors', error.toJson());
+      }
     } catch (e) {
       if (config.debug) {
         debugPrint('[OmniPulse] Failed to send errors: $e');
@@ -216,7 +215,7 @@ class OmniPulse {
       headers: {
         'Content-Type': 'application/json',
         'X-Ingest-Key': config.ingestKey,
-        'User-Agent': 'omnipulse-flutter-sdk/1.0.0',
+        'User-Agent': 'omnipulse-flutter-sdk/1.0.1',
       },
       body: body,
     ).timeout(const Duration(seconds: 5));
@@ -230,7 +229,7 @@ class OmniPulse {
   Future<bool> test() async {
     try {
       logger.info('OmniPulse SDK test message', {
-        'sdk_version': '1.0.0',
+        'sdk_version': '1.0.1',
         'platform': Platform.operatingSystem,
         'app_name': config.appName,
       });
