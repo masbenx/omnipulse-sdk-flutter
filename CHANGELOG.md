@@ -1,3 +1,8 @@
+## [v1.0.2] - 2026-03-09
+### Fixed
+- Sync `ErrorEvent` JSON keys with backend DTO (`url` → `route`)
+- Resolve type inference issues in `PerformanceCollector`
+
 ## [v0.0.15] - 2026-02-18
 ### Changed
 - Automated release via script.
