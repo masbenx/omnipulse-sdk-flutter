@@ -89,9 +89,9 @@ class ErrorEvent {
   Map<String, dynamic> toJson() => {
     'timestamp': timestamp.toIso8601String(),
     'message': message,
-    if (stackTrace != null) 'stack_trace': stackTrace,
-    if (errorType != null) 'error_type': errorType,
-    if (context != null) 'context': context,
+    if (stackTrace != null) 'stack': stackTrace,
+    if (errorType != null) 'type': errorType,
+    if (context != null) 'meta': context,
   };
 }
 
