@@ -108,7 +108,7 @@ class OmniPulsePerformance {
     
     // Calculate FPS
     final avgFrameTime = _frameTimings.reduce((a, b) => a + b) / _frameTimings.length;
-    final fps = avgFrameTime > 0 ? (1000 / avgFrameTime) : 60;
+    final fps = avgFrameTime > 0 ? (1000 / avgFrameTime) : 60.0;
     
     // Calculate P95 frame time
     final sorted = List<int>.from(_frameTimings)..sort();
@@ -134,7 +134,7 @@ class OmniPulsePerformance {
     // Report jank rate
     final jankRate = _totalFrames > 0 
         ? (_jankFrameCount / _totalFrames) * 100 
-        : 0;
+        : 0.0;
     _omnipulse.addPerformance(PerformanceEvent(
       timestamp: now,
       metricName: 'flutter.jank_rate',
