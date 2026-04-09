@@ -25,7 +25,8 @@ class OmniPulse {
   final List<ErrorEvent> _errorBuffer = [];
   final List<ScreenViewEvent> _screenBuffer = [];
   final List<TraceEvent> _traceBuffer = [];
-  final List<PerformanceEvent> _perfBuffer = [];
+  final List<AppRumEntry> _rumBuffer = [];
+  final List<OutgoingRequestEntry> _outgoingBuffer = [];
   
   Timer? _flushTimer;
   bool _isInitialized = false;
@@ -97,15 +98,22 @@ class OmniPulse {
     _checkFlush();
   }
 
-  /// Add a performance event to the buffer
-  void addPerformance(PerformanceEvent event) {
-    _perfBuffer.add(event);
+  /// Add a RUM session entry to the buffer
+  void addRum(AppRumEntry entry) {
+    _rumBuffer.add(entry);
+    _checkFlush();
+  }
+
+  /// Add an outgoing request entry to the buffer
+  void addOutgoingRequest(OutgoingRequestEntry entry) {
+    _outgoingBuffer.add(entry);
     _checkFlush();
   }
 
   void _checkFlush() {
     final totalItems = _logBuffer.length + _errorBuffer.length + 
-        _screenBuffer.length + _traceBuffer.length + _perfBuffer.length;
+        _screenBuffer.length + _traceBuffer.length + 
+        _rumBuffer.length + _outgoingBuffer.length;
     if (totalItems >= config.batchSize) {
       flush();
     }
@@ -117,13 +125,15 @@ class OmniPulse {
     final errors = List<ErrorEvent>.from(_errorBuffer);
     final screens = List<ScreenViewEvent>.from(_screenBuffer);
     final traces = List<TraceEvent>.from(_traceBuffer);
-    final perfs = List<PerformanceEvent>.from(_perfBuffer);
+    final rums = List<AppRumEntry>.from(_rumBuffer);
+    final outgoing = List<OutgoingRequestEntry>.from(_outgoingBuffer);
     
     _logBuffer.clear();
     _errorBuffer.clear();
     _screenBuffer.clear();
     _traceBuffer.clear();
-    _perfBuffer.clear();
+    _rumBuffer.clear();
+    _outgoingBuffer.clear();
 
     if (logs.isNotEmpty) {
       await _sendLogs(logs);
@@ -137,8 +147,11 @@ class OmniPulse {
     if (traces.isNotEmpty) {
       await _sendTraces(traces);
     }
-    if (perfs.isNotEmpty) {
-      await _sendPerformance(perfs);
+    if (rums.isNotEmpty) {
+      await _sendRum(rums);
+    }
+    if (outgoing.isNotEmpty) {
+      await _sendOutgoing(outgoing);
     }
   }
 
@@ -193,15 +206,28 @@ class OmniPulse {
     }
   }
 
-  Future<void> _sendPerformance(List<PerformanceEvent> perfs) async {
+  Future<void> _sendRum(List<AppRumEntry> rums) async {
     try {
-      final payload = {
-        'metrics': perfs.map((p) => p.toJson()).toList(),
-      };
-      await _send('/api/ingest/app-metrics', payload);
+      // Send session entries sequentially or wrapped (assuming backend takes individual JSON if sent per batch, or array. The backend usually expects raw AppRumIngestReq or similar. If it expects one object we send one by one)
+      for (final rum in rums) {
+        await _send('/api/ingest/app-rum', rum.toJson());
+      }
     } catch (e) {
       if (config.debug) {
-        debugPrint('[OmniPulse] Failed to send performance metrics: $e');
+        debugPrint('[OmniPulse] Failed to send RUM metrics: $e');
+      }
+    }
+  }
+
+  Future<void> _sendOutgoing(List<OutgoingRequestEntry> outgoing) async {
+    try {
+      for (final req in outgoing) {
+        // App incoming / outgoing endpoints. Use app-request for general trace linking.
+        await _send('/api/ingest/app-request', req.toJson());
+      }
+    } catch (e) {
+      if (config.debug) {
+        debugPrint('[OmniPulse] Failed to send outgoing requests: $e');
       }
     }
   }

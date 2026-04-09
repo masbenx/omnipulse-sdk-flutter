@@ -184,3 +184,77 @@ class PerformanceEvent {
     if (tags != null) 'tags': tags,
   };
 }
+
+/// App RUM (Real User Monitoring) entry
+class AppRumEntry {
+  final DateTime timestamp;
+  final String sessionId;
+  final String pageUrl;
+  final int? lcpMs;
+  final int? fidMs;
+  final double? cls;
+  final int? ttfbMs;
+  final int? fcpMs;
+  final int? inpMs;
+  final String? env;
+  final String? release;
+
+  AppRumEntry({
+    required this.timestamp,
+    required this.sessionId,
+    required this.pageUrl,
+    this.lcpMs,
+    this.fidMs,
+    this.cls,
+    this.ttfbMs,
+    this.fcpMs,
+    this.inpMs,
+    this.env,
+    this.release,
+  });
+
+  Map<String, dynamic> toJson() => {
+    'timestamp': timestamp.toIso8601String(),
+    'session_id': sessionId,
+    'page_url': pageUrl,
+    if (lcpMs != null) 'lcp_ms': lcpMs,
+    if (fidMs != null) 'fid_ms': fidMs,
+    if (cls != null) 'cls': cls,
+    if (ttfbMs != null) 'ttfb_ms': ttfbMs,
+    if (fcpMs != null) 'fcp_ms': fcpMs,
+    if (inpMs != null) 'inp_ms': inpMs,
+    if (env != null) 'env': env,
+    if (release != null) 'release': release,
+  };
+}
+
+/// Outgoing request entry for APM
+class OutgoingRequestEntry {
+  final DateTime timestamp;
+  final String method;
+  final String url;
+  final int statusCode;
+  final int durationMs;
+  final String? error;
+  final String? traceId;
+
+  OutgoingRequestEntry({
+    required this.timestamp,
+    required this.method,
+    required this.url,
+    required this.statusCode,
+    required this.durationMs,
+    this.error,
+    this.traceId,
+  });
+
+  Map<String, dynamic> toJson() => {
+    'timestamp': timestamp.toIso8601String(),
+    'method': method,
+    'route': url, // use route key to match APM backend DTO expectations
+    'status': statusCode,
+    'duration_ms': durationMs,
+    if (error != null) 'error': error,
+    if (traceId != null) 'trace_id': traceId,
+  };
+}
