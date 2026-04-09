@@ -1,3 +1,7 @@
+## [v1.0.3] - 2026-04-10
+### Changed
+- Automated release via script.
+
 ## [v1.0.2] - 2026-03-09
 ### Fixed
 - Sync `ErrorEvent` JSON keys with backend DTO (`url` → `route`)
