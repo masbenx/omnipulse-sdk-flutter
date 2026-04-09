@@ -123,9 +123,9 @@ void main() {
 
       final json = event.toJson();
 
-      expect(json['stack_trace'], equals('at line 42'));
-      expect(json['error_type'], equals('TypeError'));
-      expect(json['context']['screen'], equals('home'));
+      expect(json['stack'], equals('at line 42'));
+      expect(json['type'], equals('TypeError'));
+      expect(json['meta']['screen'], equals('home'));
     });
   });
 
