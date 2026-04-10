@@ -258,3 +258,57 @@ class OutgoingRequestEntry {
     if (traceId != null) 'trace_id': traceId,
   };
 }
+
+class JobEntry {
+  final String jobName;
+  final String? queue;
+  final int durationMs;
+  final int waitTimeMs;
+  final String status; // 'succeeded', 'failed', 'error'
+  final String? error;
+  final DateTime? timestamp;
+
+  JobEntry({
+    required this.jobName,
+    this.queue,
+    required this.durationMs,
+    required this.waitTimeMs,
+    required this.status,
+    this.error,
+    this.timestamp,
+  });
+
+  Map<String, dynamic> toJson() => {
+    'job_name': jobName,
+    if (queue != null) 'queue': queue,
+    'duration_ms': durationMs,
+    'wait_time_ms': waitTimeMs,
+    'status': status,
+    if (error != null) 'error': error,
+    if (timestamp != null) 'ts': timestamp!.toIso8601String(),
+  };
+}
+
+class AppMetricEntry {
+  final String name;
+  final double value;
+  final Map<String, String>? tags;
+  final DateTime? timestamp;
+  final String? env;
+
+  AppMetricEntry({
+    required this.name,
+    required this.value,
+    this.tags,
+    this.timestamp,
+    this.env,
+  });
+
+  Map<String, dynamic> toJson() => {
+    'name': name,
+    'value': value,
+    if (tags != null) 'tags': tags,
+    if (timestamp != null) 'timestamp': timestamp!.toIso8601String(),
+    if (env != null) 'env': env,
+  };
+}

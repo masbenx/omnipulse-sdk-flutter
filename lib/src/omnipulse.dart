@@ -27,6 +27,8 @@ class OmniPulse {
   final List<TraceEvent> _traceBuffer = [];
   final List<AppRumEntry> _rumBuffer = [];
   final List<OutgoingRequestEntry> _outgoingBuffer = [];
+  final List<JobEntry> _jobBuffer = [];
+  final List<AppMetricEntry> _metricBuffer = [];
   
   Timer? _flushTimer;
   bool _isInitialized = false;
@@ -110,10 +112,21 @@ class OmniPulse {
     _checkFlush();
   }
 
+  void captureJob(JobEntry entry) {
+    _jobBuffer.add(entry);
+    _checkFlush();
+  }
+
+  void captureMetric(AppMetricEntry entry) {
+    _metricBuffer.add(entry);
+    _checkFlush();
+  }
+
   void _checkFlush() {
     final totalItems = _logBuffer.length + _errorBuffer.length + 
         _screenBuffer.length + _traceBuffer.length + 
-        _rumBuffer.length + _outgoingBuffer.length;
+        _rumBuffer.length + _outgoingBuffer.length +
+        _jobBuffer.length + _metricBuffer.length;
     if (totalItems >= config.batchSize) {
       flush();
     }
@@ -127,6 +140,8 @@ class OmniPulse {
     final traces = List<TraceEvent>.from(_traceBuffer);
     final rums = List<AppRumEntry>.from(_rumBuffer);
     final outgoing = List<OutgoingRequestEntry>.from(_outgoingBuffer);
+    final jobs = List<JobEntry>.from(_jobBuffer);
+    final metrics = List<AppMetricEntry>.from(_metricBuffer);
     
     _logBuffer.clear();
     _errorBuffer.clear();
@@ -134,25 +149,17 @@ class OmniPulse {
     _traceBuffer.clear();
     _rumBuffer.clear();
     _outgoingBuffer.clear();
+    _jobBuffer.clear();
+    _metricBuffer.clear();
 
-    if (logs.isNotEmpty) {
-      await _sendLogs(logs);
-    }
-    if (errors.isNotEmpty) {
-      await _sendErrors(errors);
-    }
-    if (screens.isNotEmpty) {
-      await _sendScreenViews(screens);
-    }
-    if (traces.isNotEmpty) {
-      await _sendTraces(traces);
-    }
-    if (rums.isNotEmpty) {
-      await _sendRum(rums);
-    }
-    if (outgoing.isNotEmpty) {
-      await _sendOutgoing(outgoing);
-    }
+    if (logs.isNotEmpty) await _sendLogs(logs);
+    if (errors.isNotEmpty) await _sendErrors(errors);
+    if (screens.isNotEmpty) await _sendScreenViews(screens);
+    if (traces.isNotEmpty) await _sendTraces(traces);
+    if (rums.isNotEmpty) await _sendRum(rums);
+    if (outgoing.isNotEmpty) await _sendOutgoing(outgoing);
+    if (jobs.isNotEmpty) await _sendJobs(jobs);
+    if (metrics.isNotEmpty) await _sendMetrics(metrics);
   }
 
   Future<void> _sendLogs(List<LogEntry> logs) async {
@@ -229,6 +236,29 @@ class OmniPulse {
       if (config.debug) {
         debugPrint('[OmniPulse] Failed to send outgoing requests: $e');
       }
+    }
+  }
+
+  Future<void> _sendJobs(List<JobEntry> jobs) async {
+    try {
+      for (final job in jobs) {
+        await _send('/api/ingest/app-job', job.toJson());
+      }
+    } catch (e) {
+      if (config.debug) debugPrint('[OmniPulse] Failed to send jobs: $e');
+    }
+  }
+
+  Future<void> _sendMetrics(List<AppMetricEntry> metrics) async {
+    try {
+      final payload = {
+        'service_name': config.appName,
+        'environment': config.environment,
+        'metrics': metrics.map((m) => m.toJson()).toList(),
+      };
+      await _send('/api/ingest/app-metrics', payload);
+    } catch (e) {
+      if (config.debug) debugPrint('[OmniPulse] Failed to send metrics: $e');
     }
   }
 
