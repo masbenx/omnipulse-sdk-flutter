@@ -1,6 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -9,7 +7,7 @@ import 'omnipulse.dart';
 import 'types.dart';
 
 /// HTTP Client wrapper that automatically traces all HTTP requests
-/// 
+///
 /// Usage:
 /// ```dart
 /// final client = OmniPulseHttpClient();
@@ -41,7 +39,7 @@ class OmniPulseHttpClient extends http.BaseClient {
     final startTime = DateTime.now();
     final traceId = OmniPulse.instance.generateId();
     final spanId = OmniPulse.instance.generateId().substring(0, 16);
-    
+
     // Add trace headers for distributed tracing
     request.headers['X-OmniPulse-Trace-ID'] = traceId;
     request.headers['X-OmniPulse-Span-ID'] = spanId;
@@ -60,7 +58,7 @@ class OmniPulseHttpClient extends http.BaseClient {
     } finally {
       final endTime = DateTime.now();
       final durationMs = endTime.difference(startTime).inMilliseconds;
-      
+
       _recordTrace(
         request: request,
         response: response,
@@ -111,7 +109,7 @@ class OmniPulseHttpClient extends http.BaseClient {
       if (response != null) {
         attributes['http.status_code'] = response.statusCode;
         attributes['http.response_content_length'] = response.contentLength;
-        
+
         // Add response headers (redacted)
         final responseHeaders = <String, String>{};
         response.headers.forEach((key, value) {
@@ -131,9 +129,11 @@ class OmniPulseHttpClient extends http.BaseClient {
         attributes['error.message'] = error.toString();
         if (stackTrace != null) {
           attributes['error.stack'] = stackTrace.toString().substring(
-            0, 
-            stackTrace.toString().length > 2000 ? 2000 : stackTrace.toString().length,
-          );
+                0,
+                stackTrace.toString().length > 2000
+                    ? 2000
+                    : stackTrace.toString().length,
+              );
         }
       }
 
