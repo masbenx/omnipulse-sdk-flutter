@@ -1,3 +1,7 @@
+## [v1.0.4] - 2026-11-15
+### Fixed
+- Resolve remaining analyzer and buffer issues in `lib/src/omnipulse.dart` for full canonical SDK test compliance.
+
 ## [v1.0.3] - 2026-04-10
 ### Changed
 - Automated release via script.

@@ -1,7 +1,5 @@
 import 'dart:async';
-import 'dart:ui';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 
@@ -12,23 +10,23 @@ import 'types.dart';
 /// Monitors frame timing, jank detection, and app lifecycle
 class OmniPulsePerformance {
   static OmniPulsePerformance? _instance;
-  
+
   final OmniPulse _omnipulse;
-  
+
   // Frame timing tracking
   List<int> _frameTimings = [];
   DateTime? _lastFrameTime;
   Timer? _metricsTimer;
-  
+
   // Jank thresholds
   static const int jankThresholdMs = 16; // >16ms = missed 60fps frame
   static const int severeJankThresholdMs = 100; // >100ms = severe jank
-  
+
   // Stats
   int _jankFrameCount = 0;
   int _severeJankCount = 0;
   int _totalFrames = 0;
-  
+
   OmniPulsePerformance._(this._omnipulse);
 
   /// Initialize performance monitoring
@@ -36,7 +34,7 @@ class OmniPulsePerformance {
     if (_instance != null) {
       return _instance!;
     }
-    
+
     _instance = OmniPulsePerformance._(omnipulse);
     _instance!._startMonitoring();
     return _instance!;
@@ -48,41 +46,41 @@ class OmniPulsePerformance {
   void _startMonitoring() {
     // Start frame callback monitoring
     SchedulerBinding.instance.addPersistentFrameCallback(_onFrame);
-    
+
     // Start periodic metrics reporting
     _metricsTimer = Timer.periodic(
       const Duration(seconds: 30),
       (_) => _reportMetrics(),
     );
-    
+
     // Monitor app lifecycle
     WidgetsBinding.instance.addObserver(_LifecycleObserver(this));
   }
 
   void _onFrame(Duration timestamp) {
     final now = DateTime.now();
-    
+
     if (_lastFrameTime != null) {
       final frameDuration = now.difference(_lastFrameTime!).inMilliseconds;
       _frameTimings.add(frameDuration);
       _totalFrames++;
-      
+
       if (frameDuration > jankThresholdMs) {
         _jankFrameCount++;
-        
+
         if (frameDuration > severeJankThresholdMs) {
           _severeJankCount++;
           // Report severe jank immediately
           _reportJank(frameDuration);
         }
       }
-      
+
       // Keep only last 100 frame timings
       if (_frameTimings.length > 100) {
         _frameTimings.removeAt(0);
       }
     }
-    
+
     _lastFrameTime = now;
   }
 
@@ -97,24 +95,25 @@ class OmniPulsePerformance {
         'threshold_exceeded_by': frameDurationMs - severeJankThresholdMs,
       },
     );
-    
+
     _omnipulse.addPerformance(event);
   }
 
   void _reportMetrics() {
     if (_frameTimings.isEmpty) return;
-    
+
     final now = DateTime.now();
-    
+
     // Calculate FPS
-    final avgFrameTime = _frameTimings.reduce((a, b) => a + b) / _frameTimings.length;
+    final avgFrameTime =
+        _frameTimings.reduce((a, b) => a + b) / _frameTimings.length;
     final fps = avgFrameTime > 0 ? (1000 / avgFrameTime) : 60.0;
-    
+
     // Calculate P95 frame time
     final sorted = List<int>.from(_frameTimings)..sort();
     final p95Index = (sorted.length * 0.95).floor();
     final p95FrameTime = sorted[p95Index];
-    
+
     // Report FPS
     _omnipulse.addPerformance(PerformanceEvent(
       timestamp: now,
@@ -122,7 +121,7 @@ class OmniPulsePerformance {
       value: fps,
       unit: 'fps',
     ));
-    
+
     // Report P95 frame time
     _omnipulse.addPerformance(PerformanceEvent(
       timestamp: now,
@@ -130,11 +129,10 @@ class OmniPulsePerformance {
       value: p95FrameTime.toDouble(),
       unit: 'ms',
     ));
-    
+
     // Report jank rate
-    final jankRate = _totalFrames > 0 
-        ? (_jankFrameCount / _totalFrames) * 100 
-        : 0.0;
+    final jankRate =
+        _totalFrames > 0 ? (_jankFrameCount / _totalFrames) * 100 : 0.0;
     _omnipulse.addPerformance(PerformanceEvent(
       timestamp: now,
       metricName: 'flutter.jank_rate',
@@ -146,7 +144,7 @@ class OmniPulsePerformance {
         'total_frames': _totalFrames,
       },
     ));
-    
+
     // Reset counters
     _jankFrameCount = 0;
     _severeJankCount = 0;
@@ -155,7 +153,8 @@ class OmniPulsePerformance {
   }
 
   /// Manually report a custom performance metric
-  void recordMetric(String name, double value, {String? unit, Map<String, dynamic>? tags}) {
+  void recordMetric(String name, double value,
+      {String? unit, Map<String, dynamic>? tags}) {
     _omnipulse.addPerformance(PerformanceEvent(
       timestamp: DateTime.now(),
       metricName: name,
@@ -166,7 +165,8 @@ class OmniPulsePerformance {
   }
 
   /// Time an async operation
-  Future<T> timeAsync<T>(String operationName, Future<T> Function() operation) async {
+  Future<T> timeAsync<T>(
+      String operationName, Future<T> Function() operation) async {
     final stopwatch = Stopwatch()..start();
     try {
       return await operation();
@@ -215,13 +215,13 @@ class OmniPulsePerformance {
 class _LifecycleObserver extends WidgetsBindingObserver {
   final OmniPulsePerformance _performance;
   DateTime? _pausedTime;
-  
+
   _LifecycleObserver(this._performance);
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     final now = DateTime.now();
-    
+
     switch (state) {
       case AppLifecycleState.paused:
         _pausedTime = now;
