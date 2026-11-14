@@ -30,6 +30,7 @@ class OmniPulse {
   final List<AppMetricEntry> _metricBuffer = [];
   final List<AppQueryEntry> _queryBuffer = [];
   final List<AppCacheEntry> _cacheBuffer = [];
+  final List<JobEntry> _jobBuffer = [];
   
   Timer? _flushTimer;
   bool _isInitialized = false;
@@ -53,9 +54,30 @@ class OmniPulse {
   /// Get the singleton instance (must call init first)
   static OmniPulse get instance {
     if (_instance == null) {
-      throw StateError('OmniPulse must be initialized first. Call OmniPulse.init()');
+      throw StateError('OmniPulse has not been initialized. Call init() first.');
     }
     return _instance!;
+  }
+
+  /// Convert PerformanceEvent to AppMetricEntry and capture it
+  void addPerformance(PerformanceEvent event) {
+    final Map<String, String> stringTags = {};
+    if (event.tags != null) {
+      event.tags!.forEach((key, value) {
+        stringTags[key] = value.toString();
+      });
+    }
+    if (event.unit != null) {
+      stringTags['unit'] = event.unit!;
+    }
+    
+    captureMetric(AppMetricEntry(
+      name: event.metricName,
+      value: event.value,
+      tags: stringTags.isEmpty ? null : stringTags,
+      timestamp: event.timestamp,
+      env: config.environment,
+    ));
   }
 
   Future<void> _initialize() async {
