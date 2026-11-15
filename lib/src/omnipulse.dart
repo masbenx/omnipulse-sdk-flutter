@@ -159,7 +159,6 @@ class OmniPulse {
     final totalItems = _logBuffer.length + _errorBuffer.length + 
         _screenBuffer.length + _traceBuffer.length + 
         _rumBuffer.length + _outgoingBuffer.length +
-        _rumBuffer.length + _outgoingBuffer.length +
         _jobBuffer.length + _metricBuffer.length + 
         _queryBuffer.length + _cacheBuffer.length;
     if (totalItems >= config.batchSize) {
@@ -244,7 +243,7 @@ class OmniPulse {
   Future<void> _sendTraces(List<TraceEvent> traces) async {
     try {
       final payload = {
-        'traces': traces.map((t) => t.toJson()).toList(),
+        'spans': traces.map((t) => t.toJson()).toList(),
       };
       await _send('/api/ingest/app-traces', payload);
     } catch (e) {
@@ -331,7 +330,7 @@ class OmniPulse {
       headers: {
         'Content-Type': 'application/json',
         'X-Ingest-Key': config.ingestKey,
-        'User-Agent': 'omnipulse-flutter-sdk/1.0.1',
+        'User-Agent': 'omnipulse-flutter-sdk/v1.0.1',
       },
       body: body,
     ).timeout(const Duration(seconds: 5));
@@ -339,17 +338,29 @@ class OmniPulse {
     if (config.debug) {
       debugPrint('[OmniPulse] Sent to $endpoint, status: ${response.statusCode}');
     }
+    if (response.statusCode >= 400) {
+      throw HttpException('HTTP ${response.statusCode}', uri: uri);
+    }
   }
 
   /// Test connectivity to the OmniPulse backend
   Future<bool> test() async {
     try {
-      logger.info('OmniPulse SDK test message', {
-        'sdk_version': '1.0.1',
-        'platform': Platform.operatingSystem,
-        'app_name': config.appName,
+      await _send('/api/ingest/app-logs', {
+        'entries': [
+          {
+            'timestamp': DateTime.now().toUtc().toIso8601String(),
+            'level': 'info',
+            'message': 'OmniPulse SDK test message',
+            'service': config.appName,
+            'meta': {
+              'sdk_version': '1.0.1',
+              'platform': Platform.operatingSystem,
+              'app_name': config.appName,
+            },
+          },
+        ],
       });
-      await flush();
       return true;
     } catch (e) {
       if (config.debug) {
