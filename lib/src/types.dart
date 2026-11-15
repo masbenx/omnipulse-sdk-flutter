@@ -251,7 +251,7 @@ class AppOutgoingEntry {
   Map<String, dynamic> toJson() => {
     'timestamp': timestamp.toIso8601String(),
     'method': method,
-    'route': url, // use route key to match APM backend DTO expectations
+    'url': url,
     'status': statusCode,
     'duration_ms': durationMs,
     if (error != null) 'error': error,
